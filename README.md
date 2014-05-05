@@ -99,8 +99,25 @@ or, using a shell script:
 ```
 The server communicates with the player(s) using the commands `init`, `start()`, `second_move()`, `third_move()`, `last_move()`, `win()`, `loss()`, `draw()` and `end()`, as illustrated by this brief example:
 
-
-
+| Player X |                      | Server |                     | Player O |
+|----------|----------------------|--------|---------------------|----------|
+|          | ←`init`              |        |                     |          |
+|          |                      |        | `init`→             |          |
+|          | ←`start(x)`          |        |                     |          |
+|          |                      |        | `start(o)`→         |          |
+|          |                      |        | `second_move(6,1)`→ |          |
+|          |                      |        | ←`9`                |          |
+|          | ←`third_move(6,1,6)` |        |                     |          |
+|          | `9`→                 |        |                     |          |
+|          |                      |        | `next_move(9)`→     |          |
+|          |                      |        | ←`6`                |          |
+|          | ←`next_move(6)`      |        |                     |          |
+|          | `5`→                 |        |                     |          |
+|          |                      |        | `last_move(5)`→     |          |
+|          | ←`win(triple)`       |        |                     |          |
+|          |                      |        | `loss(triple)`→     |          |
+|          | ←`end`               |        |                     |          |
+|          |                      |        | `end`→              |          |
 
 You are free to write your player in any language you wish.
 
