@@ -1,4 +1,4 @@
-# COMP3411 Project 3 - Nine-Board Tic Tac Toe
+# Project 3 - Nine-Board Tic Tac Toe
 ##### Due: Sunday 1 June, 11:59 pm 
 ##### Marks: 12% of final assessment
 
