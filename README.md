@@ -1,7 +1,6 @@
-# Project 3 - Nine-Board Tic Tac Toe
-## COMP3411
-#### Due: Sunday 1 June, 11:59 pm 
-#### Marks: 12% of final assessment
+# COMP3411 Project 3 - Nine-Board Tic Tac Toe
+##### Due: Sunday 1 June, 11:59 pm 
+##### Marks: 12% of final assessment
 
 ### Introduction
 In this project you will be writing an agent to play the game of Nine-Board Tic-Tac-Toe.
