@@ -1,0 +1,15 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  agent.wrap
+%  Nine-Board Tic-Tac-Toe Agent Wrapper
+%  COMP3411/9414/9814 Artificial Intelligence
+%  Alan Blair
+%  UNSW Session 1, 2014
+%
+%  prolog (port) < agent.wrap
+
+set_prolog_flag(opmtimise,true).
+[agent].
+current_prolog_flag(argv, [File, PortString | Rest]),
+atom_number(PortString,Port),
+connect(Port),
+ttt.
