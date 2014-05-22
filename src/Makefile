@@ -10,13 +10,13 @@ CFLAGS = -Wall -g -O3
 default: agent
 
 agent: agent.o client.o game.o common.h agent.h game.h
-	$(CC) $(CFLAGS) -o agent agent.o client.o game.o
+	$(CC) $(CFLAGS) -o ../bin/agent agent.o client.o game.o
 
 servt9: servt9.o game.o common.h game.h agent.h
-	$(CC) $(CFLAGS) -o servt9 servt9.o game.o
+	$(CC) $(CFLAGS) -o ../bin/servt9 servt9.o game.o
 
 randt9: randt9.o client.o game.o common.h agent.h game.h
-	$(CC) $(CFLAGS) -o randt9 randt9.o client.o game.o
+	$(CC) $(CFLAGS) -o ../bin/randt9 randt9.o client.o game.o
 
 all: servt9 randt9 agent
 
@@ -24,4 +24,4 @@ all: servt9 randt9 agent
 	$(CC) $(CFLAGS) -c $<
 
 clean:
-	rm -f servt9 randt9 agent *.o
+	rm -f ../bin/servt9 ../bin/randt9 ../bin/agent *.o
