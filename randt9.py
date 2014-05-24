@@ -1,28 +1,100 @@
 #!/usr/bin/python
 import sys
+import re
 import socket
 import random
 
+PLAYER_X = "X"
+PLAYER_O = "O"
+PLAYER_NONE = "."
+
+board = None
+
+
+class Board:
+    """A nine-board tic-tac-toe board"""
+    player = ""
+    current_board = 0
+    last_move = (0, 0)
+    boards = [[PLAYER_NONE for i in range(1, 10)] for j in range(1, 10)]
+
+    def __init__(self, player):
+        self.player = player
+
+    def __str__(self):
+        string = "\n"
+        boards = [self.boards[:3], self.boards[3:6], self.boards[6:9]]
+        for j in range(0, 3):
+            string += " "
+            for i in range(0, len(boards[j])):
+                string += " ".join(boards[j][i][:3])
+                if i != len(boards[j])-1:
+                    string += " | "
+            string += "\n "
+            for i in range(0, len(boards[j])):
+                string += " ".join(boards[j][i][3:6])
+                if i != len(boards[j])-1:
+                    string += " | "
+            string += "\n "
+            for i in range(0, len(boards[j])):
+                string += " ".join(boards[j][i][6:9])
+                if i != len(boards[j])-1:
+                    string += " | "
+            if j != len(boards)-1:
+                string += "\n ------+-------+------ "
+            string += "\n"
+
+        return string
+
+    def add_move(self, move, current_board=None, is_me=True):
+        """Add a move to the board."""
+        if current_board is None:
+            current_board = self.current_board
+
+        if is_me:
+            self.boards[current_board-1][move-1] = self.player
+        elif self.player == PLAYER_X:
+            self.boards[current_board-1][move-1] = PLAYER_O
+        elif self.player == PLAYER_O:
+            self.boards[current_board-1][move-1] = PLAYER_X
+
+        self.last_move = (current_board, move)
+        self.current_board = move
+
+    def is_legal(self, move):
+        """Given a move, check if it's legal"""
+        return self.boards[self.current_board-1][move-1] == PLAYER_NONE
+
+
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-player = ""
 
 
-def second_move(command):
+def second_move(first_board, first_move):
+    """Perform the second move and add the first to the board"""
+    board.add_move(int(first_move), int(first_board), False)
     move()
 
 
-def third_move(command):
+def third_move(first_board, first_move, second_move):
+    """Perform the third move and add the first two to the board"""
+    board.add_move(int(first_move), int(first_board))
+    board.add_move(int(second_move), board.current_board, False)
     move()
 
 
-def next_move(command):
+def next_move(last_move):
+    """Perform a move and add the most recent one to the board"""
+    board.add_move(int(last_move), board.current_board, False)
     move()
 
 
 def move():
-    move = random.randint(1, 9)
-    print move
-    s.sendall(str(move) + "\n")
+    move_to_try = random.randint(1, 9)
+    if board.is_legal(move_to_try):
+        board.add_move(move_to_try)
+        s.sendall(str(move_to_try) + "\n")
+    else:
+        move()
 
 
 # make sure we have a port
@@ -37,20 +109,52 @@ else:
 host = socket.gethostname()
 s.connect((host, port))
 
-command = "init."
+command = "init.\n"
 
 while "end" not in command and command != "":
     command = repr(s.recv(1024))
-    print command
-    if "start(x)." in command:
-        player = "x"
-    elif "start(o)." in command:
-        player = "o"
-    if "second_move" in command:
-        second_move(command)
-    elif "third_move" in command:
-        third_move(command)
-    elif "next_move" in command:
-        next_move(command)
+    # take action on the command(s) given
+
+    # sometimes multiple commands are received at once
+    # e.g. "start" and "second_move" or "third_move"
+    # so we check for each individually, not with elifs
+    # and extract the args with regex
+
+    # start
+    start_args = re.search(r"start\(([xo])\)", command)
+    # initialise the board as the player we're told
+    if start_args is not None:
+        if start_args.group(1) == "x":
+            board = Board(PLAYER_X)
+        elif start_args.group(1) == "o":
+            board = Board(PLAYER_O)
+
+    # second_move
+    second_move_args = re.search(r"second_move\(([1-9]),([1-9])\)", command)
+    if second_move_args is not None:
+        second_move(second_move_args.group(1), second_move_args.group(2))
+
+    # third_move
+    third_move_args = re.search(r"third_move\(([1-9]),([1-9]),([1-9])\)",
+                                command)
+    if third_move_args is not None:
+        first_move = third_move_args.group(1)
+        first_board = third_move_args.group(2)
+        second_move = third_move_args.group(3)
+
+        third_move(first_move, first_board, second_move)
+
+    # next_move
+    next_move_args = re.search(r"next_move\(([1-9])\)", command)
+    if next_move_args is not None:
+        next_move(next_move_args.group(1))
+
+    # win or lose, it's just a game
+    game_end_args = re.search(r"(win|lose|end)", command)
+    if game_end_args is not None:
+        print command, board
+        break
+
+    print command, board
 
 s.close()
