@@ -3,16 +3,26 @@ import sys
 import socket
 import random
 
-s = socket.socket()
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 player = ""
 
 
-def first_move():
+def second_move(command):
+    move()
+
+
+def third_move(command):
+    move()
+
+
+def next_move(command):
+    move()
+
+
+def move():
     move = random.randint(1, 9)
-    move = 5
-    print player
-    s.send(str(move))
-    print "hello", player, "hello"
+    print move
+    s.sendall(str(move) + "\n")
 
 
 # make sure we have a port
@@ -27,20 +37,20 @@ else:
 host = socket.gethostname()
 s.connect((host, port))
 
-command = s.recv(1024)
-print command
+command = "init."
 
-while "end" not in command:
-    command = s.recv(1024)
+while "end" not in command and command != "":
+    command = repr(s.recv(1024))
     print command
-    # if "start(x)." in command:
-    #     player = "x"
-    #     print player
-    #     print "x"
-    # elif "start(o)." in command:
-    #     player = "o"
-    #     print player
-    #     print "o"
-    # else:
-    #     first_move()
-    print command
+    if "start(x)." in command:
+        player = "x"
+    elif "start(o)." in command:
+        player = "o"
+    if "second_move" in command:
+        second_move(command)
+    elif "third_move" in command:
+        third_move(command)
+    elif "next_move" in command:
+        next_move(command)
+
+s.close()
