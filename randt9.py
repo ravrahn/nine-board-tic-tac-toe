@@ -91,13 +91,18 @@ def next_move(last_move):
 
 def random_move():
     """Attmept to make a move at random"""
-    move = random.randint(1, 9)
-    if board.is_legal(move):
-        board.add_move(move)
-        s.sendall(str(move) + "\n")
+    attempted_move = random.randint(1, 9)
+    if board.is_legal(attempted_move):
+        move(attempted_move)
     else:
         random_move()
 
+
+def move(move):
+    """Given an int between 0 and 8
+       perform that move"""
+    board.add_move(move)
+    s.sendall(str(move) + "\n")
 
 # make sure we have a port
 if "-p" in sys.argv:
