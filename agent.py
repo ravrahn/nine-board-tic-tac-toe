@@ -164,4 +164,5 @@ while "end" not in command and command != "":
 
     print command, board
 
+print "We're done here."
 s.close()
