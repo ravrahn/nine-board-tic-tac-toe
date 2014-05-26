@@ -22,6 +22,7 @@ class Board:
         self.player = player
 
     def __str__(self):
+        """Return a visual representation of the board"""
         string = "\n"
         boards = [self.boards[:3], self.boards[3:6], self.boards[6:9]]
         for j in range(0, 3):
@@ -72,29 +73,30 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 def second_move(first_board, first_move):
     """Perform the second move and add the first to the board"""
     board.add_move(int(first_move), int(first_board), False)
-    move()
+    random_move()
 
 
 def third_move(first_board, first_move, second_move):
     """Perform the third move and add the first two to the board"""
     board.add_move(int(first_move), int(first_board))
     board.add_move(int(second_move), board.current_board, False)
-    move()
+    random_move()
 
 
 def next_move(last_move):
     """Perform a move and add the most recent one to the board"""
     board.add_move(int(last_move), board.current_board, False)
-    move()
+    random_move()
 
 
-def move():
-    move_to_try = random.randint(1, 9)
-    if board.is_legal(move_to_try):
-        board.add_move(move_to_try)
-        s.sendall(str(move_to_try) + "\n")
+def random_move():
+    """Attmept to make a move at random"""
+    move = random.randint(1, 9)
+    if board.is_legal(move):
+        board.add_move(move)
+        s.sendall(str(move) + "\n")
     else:
-        move()
+        random_move()
 
 
 # make sure we have a port
@@ -122,7 +124,7 @@ while "end" not in command and command != "":
 
     # start
     start_args = re.search(r"start\(([xo])\)", command)
-    # initialise the board as the player we're told
+    # initialise the board as the player we're assigned
     if start_args is not None:
         if start_args.group(1) == "x":
             board = Board(PLAYER_X)
