@@ -151,6 +151,11 @@ def next_move(last_move):
     random_move()
 
 
+def last_move(previous_move):
+    """Add the last move to the board"""
+    board.add_move(int(previous_move), board.current_board, False)
+
+
 def random_move():
     """Attmept to make a move at random"""
     attempted_move = random.randint(1, 9)
@@ -160,13 +165,12 @@ def random_move():
         random_move()
 
 
-def minimax_move(depth):
-    """Perform a naive minimax to make a move"""
+def generate_tree(depth, current_board):
+    """Generate a Tree recursively"""
     states = Tree()
-    states[board]
-    for next_board in board.next_boards():
-        states[board][next_board]
-    print states
+    for next_board in current_board.next_boards():
+        states[generate_tree(depth-1, next_board)]
+    return states
 
 
 def move(move):
@@ -228,11 +232,18 @@ while "end" not in command and command != "":
     if next_move_args is not None:
         next_move(next_move_args.group(1))
 
+    # last_move
+    last_move_args = re.search(r"last_move\(([1-9])\)", command)
+    if last_move_args is not None:
+        last_move(last_move_args.group(1))
+
     # win or lose, it's just a game
     game_end_args = re.search(r"(win|lose|end)", command)
     if game_end_args is not None:
         print command, board
         break
+
+    # print generate_tree(3, board)
 
     print command, board
 
