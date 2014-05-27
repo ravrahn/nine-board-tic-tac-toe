@@ -70,12 +70,12 @@ class Board:
             self.boards[current_board-1][move-1] = PLAYER_O
         elif self.player == PLAYER_O:
             self.boards[current_board-1][move-1] = PLAYER_X
-
+        
         new_x = self.__calculate_board_score(current_board, PLAYER_X)
         new_o = self.__calculate_board_score(current_board, PLAYER_O)
         self.x_score = self.x_score - previous_x + new_x
         self.o_score = self.o_score - previous_o + new_o
-
+        print "x_score:", str(self.x_score), "o_score:", str(self.o_score)
         self.last_move = (current_board, move)
         self.current_board = move
 
@@ -97,7 +97,7 @@ class Board:
             if num == 3:
                 score += 1000000  # Like a billion
             elif num == 2:
-                score += 5
+                score += 10
             elif num == 1:
                 score += 1
         return score
