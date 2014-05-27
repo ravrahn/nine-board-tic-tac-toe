@@ -3,6 +3,9 @@ import sys
 import re
 import socket
 import random
+import collections
+import Queue
+import copy
 
 PLAYER_X = "X"
 PLAYER_O = "O"
@@ -11,12 +14,18 @@ PLAYER_NONE = "."
 board = None
 
 
+def Tree():
+    return collections.defaultdict(Tree)
+
+
 class Board:
     """A nine-board tic-tac-toe board"""
     player = ""
     current_board = 0
     last_move = (0, 0)
     boards = [[PLAYER_NONE for i in range(1, 10)] for j in range(1, 10)]
+    x_score = 0
+    o_score = 0
 
     def __init__(self, player):
         self.player = player
@@ -52,6 +61,9 @@ class Board:
         if current_board is None:
             current_board = self.current_board
 
+        previous_x = self.__calculate_board_score(current_board, PLAYER_X)
+        previous_o = self.__calculate_board_score(current_board, PLAYER_O)
+
         if is_me:
             self.boards[current_board-1][move-1] = self.player
         elif self.player == PLAYER_X:
@@ -59,12 +71,62 @@ class Board:
         elif self.player == PLAYER_O:
             self.boards[current_board-1][move-1] = PLAYER_X
 
+        new_x = self.__calculate_board_score(current_board, PLAYER_X)
+        new_o = self.__calculate_board_score(current_board, PLAYER_O)
+        self.x_score = self.x_score - previous_x + new_x
+        self.o_score = self.o_score - previous_o + new_o
+
         self.last_move = (current_board, move)
         self.current_board = move
+
+    def __calculate_board_score(self, current_board, player):
+        score = 0
+        winlines = []
+        for a in range(0, 3):
+            winlines.append(range(a*3, a*3+3))
+            winlines.append(range(a, 9, 3))
+        winlines.append(range(2, 8, 2))
+        winlines.append(range(0, 9, 4))
+        for winline in winlines:
+            num = 0
+            for i in winline:
+                if self.boards[current_board-1][i] == player:
+                    num += 1
+                elif self.boards[current_board-1][i] != PLAYER_NONE:
+                    num -= 3
+            if num == 3:
+                score += 1000000  # Like a billion
+            elif num == 2:
+                score += 5
+            elif num == 1:
+                score += 1
+        return score
 
     def is_legal(self, move):
         """Given a move, check if it's legal"""
         return self.boards[self.current_board-1][move-1] == PLAYER_NONE
+
+    def get_score(self):
+        """Calculate the score of the board for the player"""
+        if self.player == PLAYER_X:
+            return self.x_score - self.o_score
+        else:
+            return self.o_score - self.x_score
+
+    def next_boards(self):
+        new_boards = []
+        for i in range(0, 9):
+            if (self.is_legal(i+1)):
+                new_board = copy.deepcopy(self)
+
+                if self.player == PLAYER_X:
+                    new_board.player = PLAYER_O
+                elif self.player == PLAYER_O:
+                    new_board.player = PLAYER_X
+
+                new_board.add_move(i+1)
+                new_boards.append(new_board)
+        return new_boards
 
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -98,11 +160,21 @@ def random_move():
         random_move()
 
 
+def minimax_move(depth):
+    """Perform a naive minimax to make a move"""
+    states = Tree()
+    states[board]
+    for next_board in board.next_boards():
+        states[board][next_board]
+    print states
+
+
 def move(move):
     """Given an int between 0 and 8
        perform that move"""
     board.add_move(move)
     s.sendall(str(move) + "\n")
+
 
 # make sure we have a port
 if "-p" in sys.argv:
