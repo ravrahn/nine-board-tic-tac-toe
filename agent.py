@@ -3,7 +3,6 @@ import sys
 import re
 import socket
 import random
-import collections
 import Queue
 import copy
 
@@ -11,18 +10,36 @@ PLAYER_X = "X"
 PLAYER_O = "O"
 PLAYER_NONE = "."
 
+MINIMAX_DEPTH = 1
+
 board = None
 
-
-def Tree():
-    return collections.defaultdict(Tree)
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-class Board:
-    """A nine-board tic-tac-toe board"""
+class Tree(object):
+    """A Tree with a list of Trees as children
+        and a value (a Board)"""
+    children = []
+    value = None
+
+    def __init__(self, value):
+        self.value = value
+        self.children = []
+
+    def add_child(self, child):
+        self.children.append(child)
+
+    def add_children(self, children):
+        self.children.extend(children)
+
+
+class Board(object):
+    """A nine-board tic-tac-toe board state"""
     player = ""
     current_board = 0
-    last_move = (0, 0)
+    last_move = 0
+    last_board = 0
     boards = [[PLAYER_NONE for i in range(1, 10)] for j in range(1, 10)]
     x_score = 0
     o_score = 0
@@ -56,6 +73,15 @@ class Board:
 
         return string
 
+    def __copy__(self):
+        board_copy = Board(copy.deepcopy(self.player))
+        board_copy.boards = copy.deepcopy(self.boards)
+        board_copy.last_move = copy.deepcopy(self.last_move)
+        board_copy.x_score = copy.deepcopy(self.x_score)
+        board_copy.o_score = copy.deepcopy(self.o_score)
+        board_copy.current_board = copy.deepcopy(self.current_board)
+        return board_copy
+
     def add_move(self, move, current_board=None, is_me=True):
         """Add a move to the board."""
         if current_board is None:
@@ -70,13 +96,15 @@ class Board:
             self.boards[current_board-1][move-1] = PLAYER_O
         elif self.player == PLAYER_O:
             self.boards[current_board-1][move-1] = PLAYER_X
-        
+
         new_x = self.__calculate_board_score(current_board, PLAYER_X)
         new_o = self.__calculate_board_score(current_board, PLAYER_O)
         self.x_score = self.x_score - previous_x + new_x
         self.o_score = self.o_score - previous_o + new_o
-        print "x_score:", str(self.x_score), "o_score:", str(self.o_score)
-        self.last_move = (current_board, move)
+        # print "x:", str(self.x_score)
+        # print "o:", str(self.o_score)
+        self.last_move = move
+        self.last_board = current_board
         self.current_board = move
 
     def __calculate_board_score(self, current_board, player):
@@ -115,40 +143,102 @@ class Board:
 
     def next_boards(self):
         new_boards = []
-        for i in range(0, 9):
-            if (self.is_legal(i+1)):
-                new_board = copy.deepcopy(self)
+        for i in range(1, 10):
+            if (self.is_legal(i)):
+                new_board = copy.copy(self)
 
-                if self.player == PLAYER_X:
-                    new_board.player = PLAYER_O
-                elif self.player == PLAYER_O:
-                    new_board.player = PLAYER_X
-
-                new_board.add_move(i+1)
+                new_board.add_move(i)
                 new_boards.append(new_board)
         return new_boards
 
 
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+def generate_tree(current_board, depth):
+    """Generate a Tree from a given board"""
+    states = Tree(current_board)
+
+    if depth == 0:
+        return states
+
+    for next_board in current_board.next_boards():
+        states.add_child(generate_tree(next_board, depth - 1))
+
+    return states
+
+
+def random_move():
+    """Make a move at random"""
+    attempted_move = random.randint(1, 9)
+
+    while not board.is_legal(attempted_move):
+        attempted_move = random.randint(1, 9)
+
+    move(attempted_move)
+
+
+def minimax_move():
+    """Make a move determined using a minimax algorithm"""
+    move_tree = generate_tree(board, MINIMAX_DEPTH)
+
+    best_board = None
+    best_score = -1000000  # like a billion
+
+    for child in move_tree.children:
+        child_score = minimax_score(child)
+        if child_score > best_score:
+            best_board = child.value
+            best_score = child_score
+
+    print best_score
+
+    attempted_move = best_board.last_move
+
+    move(attempted_move)
+    # return attempted_move
+
+
+def minimax_score(tree):
+    """Perform a minimax on a tree of Board objects
+        to return the score for the given board"""
+    if len(tree.children) == 0:
+        return tree.value.get_score()
+
+    best_score = -1000000  # like a billion
+
+    for child in tree.children:
+        child_score = minimax_score(child)
+        # child_score = random.randint(-100000, 100000)
+        if child_score > best_score:
+            best_score = child_score
+    return best_score
+
+
+#####################################
+#                                   #
+#            SERVER CODE            #
+#                                   #
+#####################################
 
 
 def second_move(first_board, first_move):
     """Perform the second move and add the first to the board"""
     board.add_move(int(first_move), int(first_board), False)
-    random_move()
+    # random_move()
+    minimax_move()
 
 
 def third_move(first_board, first_move, second_move):
     """Perform the third move and add the first two to the board"""
     board.add_move(int(first_move), int(first_board))
     board.add_move(int(second_move), board.current_board, False)
-    random_move()
+    # random_move()
+    minimax_move()
 
 
 def next_move(last_move):
     """Perform a move and add the most recent one to the board"""
     board.add_move(int(last_move), board.current_board, False)
-    random_move()
+    # random_move()
+    minimax_move()
 
 
 def last_move(previous_move):
@@ -156,26 +246,9 @@ def last_move(previous_move):
     board.add_move(int(previous_move), board.current_board, False)
 
 
-def random_move():
-    """Attmept to make a move at random"""
-    attempted_move = random.randint(1, 9)
-    if board.is_legal(attempted_move):
-        move(attempted_move)
-    else:
-        random_move()
-
-
-def generate_tree(depth, current_board):
-    """Generate a Tree recursively"""
-    states = Tree()
-    for next_board in current_board.next_boards():
-        states[generate_tree(depth-1, next_board)]
-    return states
-
-
 def move(move):
-    """Given an int between 0 and 8
-       perform that move"""
+    """Given an int between 0 and 8,
+        add it to the board, and send it to the server"""
     board.add_move(move)
     s.sendall(str(move) + "\n")
 
@@ -237,15 +310,12 @@ while "end" not in command and command != "":
     if last_move_args is not None:
         last_move(last_move_args.group(1))
 
+    print command, board
+
     # win or lose, it's just a game
     game_end_args = re.search(r"(win|lose|end)", command)
     if game_end_args is not None:
-        print command, board
         break
-
-    # print generate_tree(3, board)
-
-    print command, board
 
 print "We're done here."
 s.close()
