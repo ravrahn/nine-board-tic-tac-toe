@@ -3,14 +3,13 @@ import sys
 import re
 import socket
 import random
-import Queue
 import copy
 
 PLAYER_X = "X"
 PLAYER_O = "O"
 PLAYER_NONE = "."
 
-MINIMAX_DEPTH = 1
+MINIMAX_DEPTH = 3
 
 board = None
 
@@ -141,26 +140,27 @@ class Board(object):
         else:
             return self.o_score - self.x_score
 
-    def next_boards(self):
+    def next_boards(self, is_me):
         new_boards = []
         for i in range(1, 10):
             if (self.is_legal(i)):
                 new_board = copy.copy(self)
 
-                new_board.add_move(i)
+                new_board.add_move(i, self.current_board, not is_me)
+
                 new_boards.append(new_board)
         return new_boards
 
 
-def generate_tree(current_board, depth):
+def generate_tree(current_board, depth, is_me):
     """Generate a Tree from a given board"""
     states = Tree(current_board)
 
     if depth == 0:
         return states
 
-    for next_board in current_board.next_boards():
-        states.add_child(generate_tree(next_board, depth - 1))
+    for next_board in current_board.next_boards(is_me):
+        states.add_child(generate_tree(next_board, depth - 1, not is_me))
 
     return states
 
@@ -177,13 +177,13 @@ def random_move():
 
 def minimax_move():
     """Make a move determined using a minimax algorithm"""
-    move_tree = generate_tree(board, MINIMAX_DEPTH)
+    move_tree = generate_tree(board, MINIMAX_DEPTH, False)
 
     best_board = None
     best_score = -1000000  # like a billion
 
     for child in move_tree.children:
-        child_score = minimax_score(child)
+        child_score = max_score(child, board.player)
         if child_score > best_score:
             best_board = child.value
             best_score = child_score
@@ -193,19 +193,38 @@ def minimax_move():
     attempted_move = best_board.last_move
 
     move(attempted_move)
+    print attempted_move
     # return attempted_move
 
 
-def minimax_score(tree):
+def max_score(tree, original_player):
     """Perform a minimax on a tree of Board objects
         to return the score for the given board"""
+    tree.value.player = original_player
     if len(tree.children) == 0:
         return tree.value.get_score()
 
-    best_score = -1000000  # like a billion
+    best_score = 1000000000  # like a billion
 
     for child in tree.children:
-        child_score = minimax_score(child)
+        child_score = min_score(child, original_player)
+        # child_score = random.randint(-100000, 100000)
+        if child_score < best_score:
+            best_score = child_score
+    return best_score
+
+
+def min_score(tree, original_player):
+    """Perform a minimax on a tree of Board objects
+        to return the score for the given board"""
+    tree.value.player = original_player
+    if len(tree.children) == 0:
+        return tree.value.get_score()
+
+    best_score = -1000000000  # like a billion
+
+    for child in tree.children:
+        child_score = max_score(child, original_player)
         # child_score = random.randint(-100000, 100000)
         if child_score > best_score:
             best_score = child_score
