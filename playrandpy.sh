@@ -10,5 +10,5 @@ if [ "$#" -ne 1 ]; then
 fi
 
 bin/servt9 -p $1 & sleep 0.1
-./agent.py   -p $1 & sleep 0.1
-bin/lookt9 -p $1
+./agent.py -p $1 & sleep 0.1
+bin/randt9 -p $1

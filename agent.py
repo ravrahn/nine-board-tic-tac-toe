@@ -160,6 +160,7 @@ def generate_tree(current_board, depth, is_me):
         return states
 
     for next_board in current_board.next_boards(is_me):
+        # for each board, generate all the next boards
         states.add_child(generate_tree(next_board, depth - 1, not is_me))
 
     return states
@@ -194,7 +195,6 @@ def minimax_move():
 
     move(attempted_move)
     print attempted_move
-    # return attempted_move
 
 
 def max_score(tree, original_player):
