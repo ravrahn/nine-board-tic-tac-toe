@@ -10,37 +10,6 @@ current_board = None
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 
-class Tree(object):
-    """A Tree with a list of Trees as children
-        and a value (a Board)"""
-    children = []
-    value = None
-
-    def __init__(self, value):
-        self.value = value
-        self.children = []
-
-    def add_child(self, child):
-        self.children.append(child)
-
-    def add_children(self, children):
-        self.children.extend(children)
-
-
-def generate_tree(current_board, depth, is_me):
-    """Generate a Tree from a given board"""
-    states = Tree(current_board)
-
-    if depth == 0:
-        return states
-
-    for next_board in current_board.next_boards(is_me):
-        # for each board, generate all the next boards
-        states.add_child(generate_tree(next_board, depth - 1, not is_me))
-
-    return states
-
-
 def random_move():
     """Make a move at random"""
     attempted_move = random.randint(1, 9)
@@ -53,7 +22,7 @@ def random_move():
 
 def minimax_move():
     """Make a move determined using a minimax algorithm"""
-    move_tree = generate_tree(current_board, board.MINIMAX_DEPTH, False)
+    move_tree = current_board.generate_tree(board.MINIMAX_DEPTH, False)
 
     best_board = None
     best_score = -1000000  # like a billion
@@ -63,7 +32,7 @@ def minimax_move():
     for child in move_tree.children:
         child_score = max_score(child, a, b, current_board.player)
         if child_score > best_score:
-            best_board = child.value
+            best_board = child
             best_score = child_score
 
     print best_score
@@ -75,12 +44,12 @@ def minimax_move():
 
 
 def max_score(tree, a, b, original_player):
-    """Perform a minimax with alpha-beta pruning 
-        on a tree of Board objects to return the 
+    """Perform a minimax with alpha-beta pruning
+        on a tree of Board objects to return the
         score for the given board"""
-    tree.value.player = original_player
+    tree.player = original_player
     if len(tree.children) == 0:
-        return tree.value.get_score()
+        return tree.get_score()
 
     for child in tree.children:
         a = max(a, min_score(child, a, b, original_player))
@@ -93,9 +62,9 @@ def max_score(tree, a, b, original_player):
 def min_score(tree, a, b, original_player):
     """Perform a minimax on a tree of Board objects
         to return the score for the given board"""
-    tree.value.player = original_player
+    tree.player = original_player
     if len(tree.children) == 0:
-        return tree.value.get_score()
+        return tree.get_score()
 
     for child in tree.children:
         b = min(b, max_score(child, a, b, original_player))

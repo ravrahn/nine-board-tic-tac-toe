@@ -16,9 +16,17 @@ class Board(object):
     boards = [[PLAYER_NONE for i in range(1, 10)] for j in range(1, 10)]
     x_score = 0
     o_score = 0
+    children = []
 
     def __init__(self, player):
         self.player = player
+        self.children = []
+
+    def add_child(self, child):
+        self.children.append(child)
+
+    def add_children(self, children):
+        self.children.extend(children)
 
     def __str__(self):
         """Return a visual representation of the board"""
@@ -124,3 +132,16 @@ class Board(object):
 
                 new_boards.append(new_board)
         return new_boards
+
+    def generate_tree(self, depth, is_me):
+        """Generate a Tree from a given board"""
+        new_board = copy.copy(self)
+
+        if depth == 0:
+            return new_board
+
+        for next_board in new_board.next_boards(is_me):
+            # for each board, generate all the next boards
+            new_board.add_child(next_board.generate_tree(depth - 1, not is_me))
+
+        return new_board
