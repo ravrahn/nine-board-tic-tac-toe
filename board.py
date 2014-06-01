@@ -4,7 +4,7 @@ PLAYER_X = "X"
 PLAYER_O = "O"
 PLAYER_NONE = "."
 
-MINIMAX_DEPTH = 3
+MINIMAX_DEPTH = 4
 
 
 class Board(object):
@@ -20,7 +20,6 @@ class Board(object):
 
     def __init__(self, player):
         self.player = player
-        self.children = []
 
     def add_child(self, child):
         self.children.append(child)
@@ -122,6 +121,10 @@ class Board(object):
         else:
             return self.o_score - self.x_score
 
+    def add_first_move(self, first_move, first_board, is_me=True):
+        self.add_move(first_move, first_board, is_me)
+        self.children = self.generate_tree(MINIMAX_DEPTH, True).children
+
     def next_boards(self, is_me):
         new_boards = []
         for i in range(1, 10):
@@ -135,13 +138,28 @@ class Board(object):
 
     def generate_tree(self, depth, is_me):
         """Generate a Tree from a given board"""
+
         new_board = copy.copy(self)
 
         if depth == 0:
             return new_board
+
+        if len(new_board.children) != 0:
+            new_children = []
+            for next_board in new_board.children:
+                new_children.append(next_board.generate_tree(depth - 1, not is_me))
+            new_board.children = new_children
+            return new_board
+
+        
 
         for next_board in new_board.next_boards(is_me):
             # for each board, generate all the next boards
             new_board.add_child(next_board.generate_tree(depth - 1, not is_me))
 
         return new_board
+
+
+def make_move(board, move, current_board=None, is_me=True):
+    # print board.children
+    return board.children[move-1]

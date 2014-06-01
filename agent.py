@@ -12,6 +12,8 @@ s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 def random_move():
     """Make a move at random"""
+    global current_board
+
     attempted_move = random.randint(1, 9)
 
     while not current_board.is_legal(attempted_move):
@@ -22,7 +24,9 @@ def random_move():
 
 def minimax_move():
     """Make a move determined using a minimax algorithm"""
-    move_tree = current_board.generate_tree(board.MINIMAX_DEPTH, False)
+    global current_board
+
+    move_tree = current_board
 
     best_board = None
     best_score = -1000000  # like a billion
@@ -30,7 +34,7 @@ def minimax_move():
     a = -1000000000
     b = 1000000000
     for child in move_tree.children:
-        child_score = max_score(child, a, b, current_board.player)
+        child_score = max_score(child, a, b, current_board.player, 3)
         if child_score > best_score:
             best_board = child
             best_score = child_score
@@ -43,31 +47,31 @@ def minimax_move():
     print attempted_move
 
 
-def max_score(tree, a, b, original_player):
+def max_score(tree, a, b, original_player, depth):
     """Perform a minimax with alpha-beta pruning
         on a tree of Board objects to return the
         score for the given board"""
     tree.player = original_player
-    if len(tree.children) == 0:
+    if len(tree.children) == 0 or depth == 0:
         return tree.get_score()
 
     for child in tree.children:
-        a = max(a, min_score(child, a, b, original_player))
+        a = max(a, min_score(child, a, b, original_player, depth - 1))
         # child_score = random.randint(-100000, 100000)
         if b <= a:
             break
     return a
 
 
-def min_score(tree, a, b, original_player):
+def min_score(tree, a, b, original_player, depth):
     """Perform a minimax on a tree of Board objects
         to return the score for the given board"""
     tree.player = original_player
-    if len(tree.children) == 0:
+    if len(tree.children) == 0 or depth == 0:
         return tree.get_score()
 
     for child in tree.children:
-        b = min(b, max_score(child, a, b, original_player))
+        b = min(b, max_score(child, a, b, original_player, depth - 1))
         # child_score = random.randint(-100000, 100000)
         if b <= a:
             break
@@ -83,35 +87,40 @@ def min_score(tree, a, b, original_player):
 
 def second_move(first_board, first_move):
     """Perform the second move and add the first to the current_board"""
-    current_board.add_move(int(first_move), int(first_board), False)
+    global current_board
+    current_board.add_first_move(int(first_move), int(first_board), False)
     # random_move()
     minimax_move()
 
 
 def third_move(first_board, first_move, second_move):
     """Perform the third move and add the first two to the current_board"""
-    current_board.add_move(int(first_move), int(first_board))
-    current_board.add_move(int(second_move), current_board.current_board, False)
+    global current_board
+    current_board.add_first_move(int(first_move), int(first_board))
+    current_board = board.make_move(current_board, int(second_move), current_board.current_board, False)
     # random_move()
     minimax_move()
 
 
 def next_move(last_move):
     """Perform a move and add the most recent one to the current_board"""
-    current_board.add_move(int(last_move), current_board.current_board, False)
+    global current_board
+    current_board = board.make_move(current_board, int(last_move), current_board.current_board, False)
     # random_move()
     minimax_move()
 
 
 def last_move(previous_move):
     """Add the last move to the current_board"""
-    current_board.add_move(int(previous_move), current_board.current_board, False)
+    global current_board
+    current_board = board.make_move(current_board, int(previous_move), current_board.current_board, False)
 
 
 def move(move):
     """Given an int between 0 and 8,
-        add it to the current_board, and send it to the server"""
-    current_board.add_move(move)
+    add it to the current_board, and send it to the server"""
+    global current_board
+    current_board = board.make_move(current_board, move)
     s.sendall(str(move) + "\n")
 
 
