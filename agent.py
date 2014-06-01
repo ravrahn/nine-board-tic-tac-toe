@@ -9,7 +9,7 @@ PLAYER_X = "X"
 PLAYER_O = "O"
 PLAYER_NONE = "."
 
-MINIMAX_DEPTH = 3
+MINIMAX_DEPTH = 5
 
 board = None
 
@@ -183,8 +183,10 @@ def minimax_move():
     best_board = None
     best_score = -1000000  # like a billion
 
+    a = -1000000000
+    b =  1000000000
     for child in move_tree.children:
-        child_score = max_score(child, board.player)
+        child_score = max_score(child, a, b, board.player)
         if child_score > best_score:
             best_board = child.value
             best_score = child_score
@@ -197,38 +199,35 @@ def minimax_move():
     print attempted_move
 
 
-def max_score(tree, original_player):
+def max_score(tree, a, b, original_player):
+    """Perform a minimax with alpha-beta pruning 
+        on a tree of Board objects to return the 
+        score for the given board"""
+    tree.value.player = original_player
+    if len(tree.children) == 0:
+        return tree.value.get_score()
+
+    for child in tree.children:
+        a = max(a, min_score(child, a, b, original_player))
+        # child_score = random.randint(-100000, 100000)
+        if b <= a:
+            break
+    return a
+
+
+def min_score(tree, a, b, original_player):
     """Perform a minimax on a tree of Board objects
         to return the score for the given board"""
     tree.value.player = original_player
     if len(tree.children) == 0:
         return tree.value.get_score()
 
-    best_score = 1000000000  # like a billion
-
     for child in tree.children:
-        child_score = min_score(child, original_player)
+        b = min(b, max_score(child, a, b, original_player))
         # child_score = random.randint(-100000, 100000)
-        if child_score < best_score:
-            best_score = child_score
-    return best_score
-
-
-def min_score(tree, original_player):
-    """Perform a minimax on a tree of Board objects
-        to return the score for the given board"""
-    tree.value.player = original_player
-    if len(tree.children) == 0:
-        return tree.value.get_score()
-
-    best_score = -1000000000  # like a billion
-
-    for child in tree.children:
-        child_score = max_score(child, original_player)
-        # child_score = random.randint(-100000, 100000)
-        if child_score > best_score:
-            best_score = child_score
-    return best_score
+        if b <= a:
+            break
+    return b
 
 
 #####################################
