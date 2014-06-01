@@ -1,4 +1,32 @@
 #!/usr/bin/python
+# The program runs as a loop, waiting for an instruction for the server,
+# identifying it with regular expressions, and executing an appropriate
+# method. If it receives a second_, third_, or next_move instruction, it
+# adds the given moves to the Board, and makes its own move. A win, loss,
+# or draw will simply break from the loop and close the connection.
+#
+# Beyond that, the agent has a Board class (in board.py) to store the
+# board. The Board class also functions as a move tree, containing each
+# possible Board that can result from it.
+# The Board class stores the state of the board as a 9x9 2D array
+# where each sub-array represents one of the sub-boards.
+# It also stores the player of the game (X or O), the current sub-board,
+# and the last move made.
+# It has a method to calculate heuristic scores for a minimax search,
+# and stores these values too, to reduce the search time.
+# When a move is made, the global current_board variable is
+# defined as the child board it contains
+#
+# With this Board class, an alpha-beta pruning algorithm is used
+# to determine the best move to make. The tree structure of the class
+# allows it to be traversed easily with the minimax algorithm, as
+# does the keeping of heuristic scores within each Board.
+# The alphabeta_move() function makes a move by calling the
+# alphabeta_recurse() function to determine the best one,
+# and makes it. The _recurse function itself is a simple alpha-beta
+# pruning algorithm - pruning if the alpha value exceeds or matches
+# the beta, otherwise doing a regular minimax search.
+
 import sys
 import re
 import socket
