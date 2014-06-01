@@ -5,9 +5,6 @@ import socket
 import random
 import board
 
-
-MINIMAX_DEPTH = 3
-
 current_board = None
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -56,7 +53,7 @@ def random_move():
 
 def minimax_move():
     """Make a move determined using a minimax algorithm"""
-    move_tree = generate_tree(current_board, MINIMAX_DEPTH, False)
+    move_tree = generate_tree(current_board, board.MINIMAX_DEPTH, False)
 
     best_board = None
     best_score = -1000000  # like a billion
