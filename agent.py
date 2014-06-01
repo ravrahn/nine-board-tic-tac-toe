@@ -9,7 +9,11 @@ PLAYER_X = "X"
 PLAYER_O = "O"
 PLAYER_NONE = "."
 
-MINIMAX_DEPTH = 5
+MINIMAX_DEPTH = 4
+
+ONE_IN_A_ROW = 1
+TWO_IN_A_ROW = 25
+THREE_IN_A_ROW = 1000000
 
 board = None
 
@@ -122,11 +126,11 @@ class Board(object):
                 elif self.boards[current_board-1][i] != PLAYER_NONE:
                     num -= 3
             if num == 3:
-                score += 1000000  # Like a billion
+                score += THREE_IN_A_ROW  # Like a billion
             elif num == 2:
-                score += 10
+                score += TWO_IN_A_ROW
             elif num == 1:
-                score += 1
+                score += ONE_IN_A_ROW
         return score
 
     def is_legal(self, move):
