@@ -207,7 +207,7 @@ while "end" not in command and command != "":
     print command, current_board
 
     # win or lose, it's just a game
-    game_end_args = re.search(r"(win|lose|end)", command)
+    game_end_args = re.search(r"(win|lose|draw|end)", command)
     if game_end_args is not None:
         break
 

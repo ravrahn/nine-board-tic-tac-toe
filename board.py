@@ -6,6 +6,7 @@ PLAYER_NONE = "."
 
 MINIMAX_DEPTH = 3
 
+
 class Board(object):
     """A nine-board tic-tac-toe board state"""
     player = ""
