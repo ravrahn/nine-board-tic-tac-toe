@@ -28,14 +28,14 @@ class Tree(object):
 
 
 def generate_tree(current_board, depth, is_me):
-    """Generate a Tree from a given current_board"""
+    """Generate a Tree from a given board"""
     states = Tree(current_board)
 
     if depth == 0:
         return states
 
     for next_board in current_board.next_boards(is_me):
-        # for each current_board, generate all the next current_boards
+        # for each board, generate all the next boards
         states.add_child(generate_tree(next_board, depth - 1, not is_me))
 
     return states
@@ -58,8 +58,10 @@ def minimax_move():
     best_board = None
     best_score = -1000000  # like a billion
 
+    a = -1000000000
+    b =  1000000000
     for child in move_tree.children:
-        child_score = max_score(child, current_board.player)
+        child_score = max_score(child, a, b, current_board.player)
         if child_score > best_score:
             best_board = child.value
             best_score = child_score
@@ -72,38 +74,35 @@ def minimax_move():
     print attempted_move
 
 
-def max_score(tree, original_player):
-    """Perform a minimax on a tree of Board objects
-        to return the score for the given current_board"""
+def max_score(tree, a, b, original_player):
+    """Perform a minimax with alpha-beta pruning 
+        on a tree of Board objects to return the 
+        score for the given board"""
     tree.value.player = original_player
     if len(tree.children) == 0:
         return tree.value.get_score()
 
-    best_score = 1000000000  # like a billion
-
     for child in tree.children:
-        child_score = min_score(child, original_player)
+        a = max(a, min_score(child, a, b, original_player))
         # child_score = random.randint(-100000, 100000)
-        if child_score < best_score:
-            best_score = child_score
-    return best_score
+        if b <= a:
+            break
+    return a
 
 
-def min_score(tree, original_player):
+def min_score(tree, a, b, original_player):
     """Perform a minimax on a tree of Board objects
-        to return the score for the given current_board"""
+        to return the score for the given board"""
     tree.value.player = original_player
     if len(tree.children) == 0:
         return tree.value.get_score()
 
-    best_score = -1000000000  # like a billion
-
     for child in tree.children:
-        child_score = max_score(child, original_player)
+        b = min(b, max_score(child, a, b, original_player))
         # child_score = random.randint(-100000, 100000)
-        if child_score > best_score:
-            best_score = child_score
-    return best_score
+        if b <= a:
+            break
+    return b
 
 
 #####################################
@@ -172,7 +171,7 @@ while "end" not in command and command != "":
 
     # start
     start_args = re.search(r"start\(([xo])\)", command)
-    # initialise the current_board as the player we're assigned
+    # initialise the board as the player we're assigned
     if start_args is not None:
         if start_args.group(1) == "x":
             current_board = board.Board(board.PLAYER_X)
