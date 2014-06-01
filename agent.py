@@ -9,7 +9,7 @@ PLAYER_X = "X"
 PLAYER_O = "O"
 PLAYER_NONE = "."
 
-MINIMAX_DEPTH = 5
+MINIMAX_DEPTH = 4
 
 ONE_IN_A_ROW = 1
 TWO_IN_A_ROW = 25
@@ -19,6 +19,7 @@ board = None
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+game_tree = None
 
 class Tree(object):
     """A Tree with a list of Trees as children
@@ -104,8 +105,7 @@ class Board(object):
         new_o = self.__calculate_board_score(current_board, PLAYER_O)
         self.x_score = self.x_score - previous_x + new_x
         self.o_score = self.o_score - previous_o + new_o
-        # print "x:", str(self.x_score)
-        # print "o:", str(self.o_score)
+
         self.last_move = move
         self.last_board = current_board
         self.current_board = move
@@ -169,6 +169,27 @@ def generate_tree(current_board, depth, is_me):
 
     return states
 
+def repopulate_tree(tree, depth, move):
+    """Repopulates the lower layers of a given tree"""
+    for child in tree.children:
+        if child.last_move == move:
+            tree = child
+            break
+    tree = repopulate_tree_recurse(tree, depth, True)
+    return tree
+
+def repopulate_tree_recurse(tree, depth, is_me):
+    if depth == 0:
+        return tree
+    elif len(tree.children) > 0:
+        for child in tree.children:
+            repopulate_tree_recurse(child, depth-1, not is_me)
+    else:
+        board = tree.value
+        for next_board in board.next_boards(is_me):
+            tree.add_child(generate_tree(next_board, depth - 1, not is_me))
+    return tree
+
 
 def random_move():
     """Make a move at random"""
@@ -183,13 +204,14 @@ def alphabeta_move():
     move_tree = generate_tree(board, MINIMAX_DEPTH, False)
     a = -10000000
     b =  10000000
-    best_board = move_tree
-    for child in move_tree.children:
+    best_board = game_tree
+    for child in game_tree.children:
         olda = a
         a = max(a, alphabeta_recurse(child, MINIMAX_DEPTH-1, a, b, False))
         if a > olda:
-            best_board = child.value
-    attempted_move = best_board.last_move
+            best_board = child
+    attempted_move = best_board.value.last_move
+    game_tree = best_board
     move(attempted_move)
     print attempted_move
 
@@ -222,7 +244,7 @@ def alphabeta_recurse(node, depth, a, b, maximizing_player):
 def second_move(first_board, first_move):
     """Perform the second move and add the first to the board"""
     board.add_move(int(first_move), int(first_board), False)
-    # random_move()
+    game_tree = generate_tree(board, MINIMAX_DEPTH, False)
     alphabeta_move()
 
 
@@ -230,14 +252,14 @@ def third_move(first_board, first_move, second_move):
     """Perform the third move and add the first two to the board"""
     board.add_move(int(first_move), int(first_board))
     board.add_move(int(second_move), board.current_board, False)
-    # random_move()
+    game_tree = generate_tree(board, MINIMAX_DEPTH, False)
     alphabeta_move()
 
 
 def next_move(last_move):
     """Perform a move and add the most recent one to the board"""
     board.add_move(int(last_move), board.current_board, False)
-    # random_move()
+    game_tree = repopulate_tree(game_tree, MINIMAX_DEPTH, last_move)
     alphabeta_move()
 
 
